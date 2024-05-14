@@ -11,7 +11,7 @@ interface DecodedToken extends JwtPayload {
 }
 
 export const registerUser = async (req: Request, res: Response) => {
-  const { username, email, password, phoneNumber } = req.body;
+  const { username, email, password, phoneNumber, isAgent } = req.body;
   const existingUser = await User.findOne({ email, username });
 
   if (!email || typeof email !== "string" || !isValidEmail(email)) {
@@ -37,9 +37,14 @@ export const registerUser = async (req: Request, res: Response) => {
     email,
     password: passwordHash,
     phoneNumber,
+    isAgent,
   });
+  if (newUser.email === process.env.ADMIN_EMAIL) {
+    newUser.isAdmin = true;
+    await newUser.save();
+  }
   if (newUser) {
-    await sendVerificationEmail(newUser._id, newUser.email);
+    await sendVerificationEmail(newUser._id, newUser.email, newUser.username);
   }
 
   return res.status(201).json({
