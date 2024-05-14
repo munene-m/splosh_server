@@ -3,7 +3,8 @@ import cors from "cors";
 import bodyParser from "body-parser";
 import dotenv from "dotenv";
 import helmet from "helmet";
-import userRoutes from "./routers/user";
+import userRoutes from "./routes/user";
+import productRoutes from "./routes/product";
 import { connectDB } from "./config/db";
 
 const app = express();
@@ -16,6 +17,7 @@ connectDB();
 const PORT = 5000;
 
 app.use("/api/v1/user", userRoutes);
+app.use("/api/v1/products", productRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

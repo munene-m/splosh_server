@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { User } from "../models/users";
 import { hash, verify } from "@node-rs/argon2";
-import isValidEmail from "../utils/validation";
+import { isValidEmail } from "../utils/validation";
 import { sendVerificationEmail } from "../utils/sendVerificationMail";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { ObjectId } from "mongoose";
