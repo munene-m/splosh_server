@@ -32,7 +32,8 @@ interface Error {
 
 export const sendVerificationEmail = async (
   userId: ObjectId,
-  userEmail: string
+  userEmail: string,
+  username: string
 ) => {
   return new Promise(async (resolve, reject) => {
     try {
@@ -47,7 +48,7 @@ export const sendVerificationEmail = async (
         await user.save();
       }
 
-      const client = userEmail.split("@")[0];
+      //   const client = userEmail.split("@")[0];
       const verificationPath = path.join(
         __dirname,
         "../client/verification.html"
@@ -56,7 +57,7 @@ export const sendVerificationEmail = async (
       const linkUrl = `${process.env.CLIENT_URL}`;
       const verificationT = `${verificationToken}`;
       const personalizedTemplate = verificationTemplate
-        .replace("{{client}}", client)
+        .replace("{{client}}", username)
         .replace("{{linkUrl}}", linkUrl)
         .replace("{{verification}}", verificationT);
 
