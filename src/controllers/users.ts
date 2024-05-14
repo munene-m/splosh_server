@@ -5,6 +5,7 @@ import { isValidEmail } from "../utils/validation";
 import { sendVerificationEmail } from "../utils/sendVerificationMail";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { ObjectId } from "mongoose";
+import { AffiliateLinkModel } from "../models/affiliateLink";
 
 interface DecodedToken extends JwtPayload {
   userId: string;
@@ -112,6 +113,16 @@ export const verifyUser = async (req: Request, res: Response) => {
   } catch (error) {
     console.error(error);
     return res.status(400).json({ error: "Invalid or expired token" });
+  }
+};
+
+export const getLinks = async (req: Request, res: Response) => {
+  const { userId } = req.params;
+  try {
+    const links = await AffiliateLinkModel.find({ user: userId });
+    return res.status(200).json(links);
+  } catch (error) {
+    res.status(500).json({ message: "An error occured while fetching links" });
   }
 };
 

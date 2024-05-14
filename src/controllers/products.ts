@@ -5,10 +5,13 @@ import {
   productModel,
   deleteProductById,
 } from "../models/products";
+import { generateAffiliateLink } from "../utils/generateLink";
+import { User } from "../models/users";
 import multer from "multer";
 import dotenv from "dotenv";
 import logger from "../utils/logging";
 import { validateProductFields } from "../utils/validation";
+import { AffiliateLinkModel } from "../models/affiliateLink";
 import cloudinary from "cloudinary";
 dotenv.config();
 
@@ -48,13 +51,14 @@ export async function createProduct(req: Request, res: Response) {
     return res.status(400).json({ message: "Product image is required" });
   }
 
-  const result = await cloudinary.v2.uploader.upload(image.path, {
-    // width: 500,
-    // height: 500,
-    crop: "scale",
-    quality: 50,
-  });
   try {
+    // Upload image to Cloudinary
+    const result = await cloudinary.v2.uploader.upload(image.path, {
+      crop: "scale",
+      quality: 50,
+    });
+
+    // Create product
     const product = await productModel.create({
       name,
       description,
@@ -62,11 +66,29 @@ export async function createProduct(req: Request, res: Response) {
       previousPrice,
       image: result.secure_url,
     });
+
     if (!product) {
       return res
         .status(400)
-        .json({ error: "An error occured when creating product" });
+        .json({ error: "An error occurred when creating product" });
     }
+
+    // Find all agent users
+    const users = await User.find({ isAgent: true });
+
+    // Create affiliate links for agent users
+    for (const user of users) {
+      const affiliateLink = await AffiliateLinkModel.create({
+        user: user._id,
+        product: product._id,
+        link: generateAffiliateLink(product.id, user.id),
+      });
+      if (!affiliateLink) {
+        logger.error("Failed to create affiliate link for user:", user._id);
+      }
+    }
+
+    // Return successful response
     res.status(201).json({
       _id: product.id,
       name: product.name,
@@ -77,7 +99,7 @@ export async function createProduct(req: Request, res: Response) {
     });
     logger.info(`Product - ${product.id} has been created successfully`);
   } catch (error) {
-    logger.error("An error occured: ", error);
+    logger.error("An error occurred:", error);
     res.status(400).json({ message: "An error occurred" });
   }
 }
@@ -142,6 +164,8 @@ export async function getProduct(req: Request, res: Response) {
 export async function deleteProduct(req: Request, res: Response) {
   try {
     await deleteProductById(req.params.id);
+    await AffiliateLinkModel.deleteMany({ product: req.params.id });
+
     return res.status(200).json({ message: "Product deleted" });
   } catch (error) {
     logger.error("Item not found");

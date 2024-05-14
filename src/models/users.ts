@@ -27,5 +27,5 @@ const userSchema = new mongoose.Schema<UserDoc>(
   { timestamps: true }
 );
 
-const User = mongoose.model<UserDoc>("splosh_users", userSchema);
+const User = mongoose.model<UserDoc>("User", userSchema);
 export { User };

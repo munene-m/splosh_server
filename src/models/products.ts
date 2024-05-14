@@ -8,7 +8,7 @@ const productSchema = new mongoose.Schema({
   image: { type: String },
 });
 
-export const productModel = mongoose.model("splosh_products", productSchema);
+export const productModel = mongoose.model("Product", productSchema);
 export const getProductById = (id: string) => productModel.findById(id);
 export const getAllProducts = () => productModel.find();
 export const deleteProductById = (id: string) =>
