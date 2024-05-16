@@ -76,19 +76,27 @@ export async function createProduct(req: Request, res: Response) {
     // Find all agent users
     const users = await User.find({ isAgent: true });
 
-    // Create affiliate links for agent users
+    // Create affiliate links for agent users if they don't already exist
     for (const user of users) {
-      const affiliateLink = await AffiliateLinkModel.create({
+      // Check if an affiliate link already exists for this user and product
+      const existingLink = await AffiliateLinkModel.findOne({
         user: user._id,
         product: product._id,
-        link: generateAffiliateLink(product.id, user.id),
       });
-      if (!affiliateLink) {
-        logger.error("Failed to create affiliate link for user:", user._id);
+
+      // If an affiliate link doesn't exist, create a new one
+      if (!existingLink) {
+        const affiliateLink = await AffiliateLinkModel.create({
+          user: user._id,
+          product: product._id,
+          link: generateAffiliateLink(product.id, user.id),
+        });
+        if (!affiliateLink) {
+          logger.error("Failed to create affiliate link for user:", user._id);
+        }
       }
     }
 
-    // Return successful response
     res.status(201).json({
       _id: product.id,
       name: product.name,
