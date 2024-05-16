@@ -14,5 +14,5 @@ const wheelSpinSchema = new mongoose.Schema<WheelSpinDoc>({
     type: Number,
   },
 });
-const Wheelspin = mongoose.model<WheelSpinDoc>("User", wheelSpinSchema);
+const Wheelspin = mongoose.model<WheelSpinDoc>("WheelSpin", wheelSpinSchema);
 export { Wheelspin };
