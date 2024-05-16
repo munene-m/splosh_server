@@ -33,53 +33,67 @@ export const registerUser = async (req: Request, res: Response) => {
     outputLen: 32,
     parallelism: 1,
   });
-  const newUser = await User.create({
-    username,
-    email,
-    password: passwordHash,
-    phoneNumber,
-    isAgent,
-  });
-  if (newUser.email === process.env.ADMIN_EMAIL) {
-    newUser.isAdmin = true;
-    await newUser.save();
-  }
-  if (newUser) {
-    await sendVerificationEmail(newUser._id, newUser.email, newUser.username);
-  }
+  try {
+    const newUser = await User.create({
+      username,
+      email,
+      password: passwordHash,
+      phoneNumber,
+      isAgent,
+    });
+    if (newUser.email === process.env.ADMIN_EMAIL) {
+      newUser.isAdmin = true;
+      await newUser.save();
+    }
+    if (newUser) {
+      await sendVerificationEmail(newUser._id, newUser.email, newUser.username);
+    }
 
-  return res.status(201).json({
-    token: generateToken(newUser.id),
-  });
+    return res.status(201).json({
+      token: generateToken(newUser.id),
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to register user", error });
+  }
 };
 
 export const loginUser = async (req: Request, res: Response) => {
   const { email, password } = req.body;
-  const user = await User.findOne({ email });
-  if (!user) {
-    return res.status(400).json({ message: "Invalid email or password" });
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: "Invalid email or password" });
+    }
+    const validPassword = await verify(user.password, password, {
+      memoryCost: 19456,
+      timeCost: 2,
+      outputLen: 32,
+      parallelism: 1,
+    });
+    if (!validPassword) {
+      return res.status(400).json({ message: "Invalid email or password" });
+    }
+    res.status(200).json({
+      id: user.id,
+      name: user.username,
+      token: generateToken(user.id),
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to login user", error });
   }
-  const validPassword = await verify(user.password, password, {
-    memoryCost: 19456,
-    timeCost: 2,
-    outputLen: 32,
-    parallelism: 1,
-  });
-  if (!validPassword) {
-    return res.status(400).json({ message: "Invalid email or password" });
-  }
-  res
-    .status(200)
-    .json({ id: user.id, name: user.username, token: generateToken(user.id) });
 };
 
 export const getUser = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const user = await User.findById(id).select("-password");
-  if (!user) {
-    return res.status(404).json({ message: "User not found" });
+  try {
+    const user = await User.findById(id).select("-password");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    return res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to get user", error });
   }
-  return res.status(200).json(user);
 };
 
 export const verifyUser = async (req: Request, res: Response) => {
@@ -112,7 +126,9 @@ export const verifyUser = async (req: Request, res: Response) => {
     res.status(200).json({ message: "Account successfully verified" });
   } catch (error) {
     console.error(error);
-    return res.status(400).json({ error: "Invalid or expired token" });
+    return res
+      .status(500)
+      .json({ message: "Error when verifying user account", error });
   }
 };
 
@@ -122,7 +138,9 @@ export const getLinks = async (req: Request, res: Response) => {
     const links = await AffiliateLinkModel.find({ user: userId });
     return res.status(200).json(links);
   } catch (error) {
-    res.status(500).json({ message: "An error occured while fetching links" });
+    res
+      .status(500)
+      .json({ message: "An error occured while fetching links", error });
   }
 };
 
@@ -142,8 +160,8 @@ export const deleteUser = async (req: Request, res: Response) => {
       .status(200)
       .json({ message: "User and associated data deleted successfully" });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Server error" });
+    console.log(error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 
