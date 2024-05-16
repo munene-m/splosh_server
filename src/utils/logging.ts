@@ -4,9 +4,7 @@ import {
   MongoDBTransportInstance,
   MongoDBConnectionOptions,
 } from "winston-mongodb";
-const {
-  MongoDB,
-}: { MongoDB: MongoDBTransportInstance } = require("winston-mongodb");
+const {}: { MongoDB: MongoDBTransportInstance } = require("winston-mongodb");
 import winstonMongoDB from "winston-mongodb";
 dotenv.config();
 
@@ -17,14 +15,16 @@ const logger = createLogger({
     new transports.Console(), // Log to the console
     new transports.File({ filename: "logs/error.log", level: "error" }), // Log all errors to a file
     new transports.File({ filename: "logs/combined.log" }), // Log all levels to another file
-    new MongoDB({
+    new transports.MongoDB({
       level: "info", // Log level for this transport
-      db: process.env.MONGO_URL || "", // MongoDB connection URL
-      collection: "splosh-server-logs", // Collection name for log entries
+      db: process.env.MONGO_URL,
+      collection: "splosh-server-logs",
       options: {
-        useUnifiedTopology: true, // Use the new MongoDB driver
+        useUnifiedTopology: true,
       },
-      storeHost: true, //store os.hostName() value
+      leaveConnectionOpen: false,
+      expireAfterSeconds: 2592000,
+      storeHost: false,
     } as MongoDBConnectionOptions),
   ],
 });
