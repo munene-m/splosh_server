@@ -13,7 +13,7 @@ interface DecodedToken extends JwtPayload {
 
 export const registerUser = async (req: Request, res: Response) => {
   const { username, email, password, phoneNumber, isAgent } = req.body;
-  const existingUser = await User.findOne({ email, username });
+  const existingUser = await User.findOne({ email });
 
   if (!email || typeof email !== "string" || !isValidEmail(email)) {
     return res.status(400).json({ message: "Invalid email" });
@@ -22,9 +22,7 @@ export const registerUser = async (req: Request, res: Response) => {
     return res.status(400).json({ message: "Invalid password" });
   }
   if (existingUser) {
-    return res
-      .status(400)
-      .json({ message: "Email or username already in use." });
+    return res.status(400).json({ message: "Email already in use." });
   }
   const passwordHash = await hash(password, {
     // recommended minimum parameters
