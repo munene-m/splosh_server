@@ -62,6 +62,12 @@ export const loginUser = async (req: Request, res: Response) => {
     if (!user) {
       return res.status(400).json({ message: "Invalid email or password" });
     }
+    if (!user.isVerified) {
+      return res.status(401).json({
+        error:
+          "Your email is not verified on our system,Please verify your email before logging in",
+      });
+    }
     const validPassword = await verify(user.password, password, {
       memoryCost: 19456,
       timeCost: 2,
